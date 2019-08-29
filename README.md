@@ -1,2 +1,0 @@
-# lincoln
-land value project
