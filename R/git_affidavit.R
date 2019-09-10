@@ -6,6 +6,7 @@ git_affidavit <- function(){
       dt <- rbindlist(list(dt, dt2), use.names = TRUE, fill=TRUE)
       dt2 <- NULL
       saveRDS(dt, affidavit_location)
+      #test
   } else {
     dt <- readRDS(affidavit_location)
   }
