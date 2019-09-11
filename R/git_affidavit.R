@@ -7,7 +7,7 @@ git_affidavit <- function(){
       dt2 <- NULL
       saveRDS(dt, affidavit_location)
       #test
-      #test2
+      #test two
   } else {
     dt <- readRDS(affidavit_location)
   }
