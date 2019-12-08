@@ -13,7 +13,7 @@ library(data.table)
 library(tidyverse)
 library(ggmap)
 
-ggmap::register_google(key = "AIzaSyDNqrQa3Ap77vEicmeoeL8pfmTRT35lPnk")
+ggmap::register_google#(key = "GO TO GOOGLE TO FIND HOW TO GET A GMAPS KEY")
 setwd("~/Dropbox/attendanceZoneBoundaries/SABS_1516_SchoolLevels")
 schoolbounds <- st_read('SABS_1516_Primary.shp') ## loading boundaries of primary schools
 schoolbounds<- schoolbounds[which(schoolbounds$stAbbrev == 'AZ'),] ## only arizona primary schools
