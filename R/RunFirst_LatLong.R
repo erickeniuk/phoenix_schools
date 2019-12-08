@@ -31,7 +31,7 @@ data17 <- data17[,c(2,24,25)]
 data18 <- read.csv("IMPSALES_2018.CSV")
 data18 <- data18[,c(2,24,25)]
 colnames(data) <- c("PARCELID","LONGITUDE", "LATITUDE")
-
+fulllatlong<- rbind(data,data9,data11)
 fulllatlong<- rbind(data,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18)
 fulllatlong[,1] <- gsub("(\\w{3})(\\w{2})(\\w{4})$","\\1-\\2-\\3",fulllatlong[,1])
 fulllatlong[,1] <- gsub("(\\d{3})(\\d{2})(\\d{3})$","\\1-\\2-\\3",fulllatlong[,1])

@@ -10,24 +10,51 @@ library(foreign)
 
 ### TESTING TESTING TESTING TESTING TESTING TESTING
 fullscores_enroll <- readRDS("fullscores_enroll.RDS")
+length(unique(fullscores_enroll$school))
+length(unique(dt_tableown$school))
+length(unique(dt_table$school))
 # merge full scores with shares of investors by school ownership
-length(which(is.na(fullscores_enroll$sch_id))==TRUE)
+fullscores_enroll <- fullscores_enroll[medprice, on = c("year" = "int_year", "school"= "school"), ]
 fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
-fullscores_enroll <- fullscores_enroll[dt_table_own, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[dt_tableown, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
 fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+fullscores_enroll <- fullscores_enroll[dt_tableownsmall, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+fullscores_enroll <- fullscores_enroll[dt_tableownmedium, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+fullscores_enroll <- fullscores_enroll[dt_tableownlarge, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+## shares of purchases
 fullscores_enroll <- fullscores_enroll[dt_table, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
 fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
-names(fullscores_enroll)[14] <- "share_investor_purchased"
+fullscores_enroll <- fullscores_enroll[dt_tablesmall, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+fullscores_enroll <- fullscores_enroll[dt_tablemed, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
+fullscores_enroll <- fullscores_enroll[dt_tablelarge, on = c("year"="int_year","school"="school"), ]  ## adding shares of investors
+fullscores_enroll <- fullscores_enroll[!is.na(fullscores_enroll$sch_id),]
 final <- fullscores_enroll
+length(which(fullscores_enroll$share_investor_purchases==0))
 #impute the average for shares = to 0?
-saveRDS(final, file="phoenix_panel_final.RDS")
+#saveRDS(final, file="phoenix_panel_final.RDS")
+#write.csv(final, file="phoenix_panel_final.csv")
+final <- read.csv("phoenix_panel_final.csv")
+final <- as.data.table(final)
+final <- final[!is.na(final$math_pass),]
+final <- final[!is.na(final$reading_pass),] 
+final <- final[, rankmath:=100*(percent_rank(math_pass)), by=year]
+final <- final[, rankread:=100*(percent_rank(reading_pass)), by=year]
+#write.csv(final, file="phoenix_panel_final.csv")
 
+summary(lm(reading_pass~charter+log(share_investor_owned+.01) + log(share_investor_purchased+1) +
+             allstudents + freelunch + ell, data=final))
 
+names(final)
+final <- final[, ell_prop:= 100*(ell/allstudents) ]
+final <- final[, free_prop:= 100*(freelunch/allstudents) ]
 
-
-
-
-
+summary(lm(math_pass ~ share_investor_ownership + share_investor_purchases + allstudents + ell_prop + free_prop 
+           + med_price + factor(school), data=final))
 
 
 E <- pdata.frame(final, index=c("sch_id","year"), drop.index=TRUE, row.names=TRUE)

@@ -4,17 +4,21 @@ library(tidyr)
 library(ggplot2)
 library(dplyr)
 ###
+
 homesales <- readRDS("phoenix_data_grantee_frequency.rds")
 homesales <- separate(homesales, col= "SALE DATE (MMYYYY)",into = c('SALE MONTH', 'SALE YEAR'), sep = -4, convert=TRUE)
 ### add merge lat and longs to original dataset
 homesales$`GRANTEE OWNER NAME`[(homesales$`GRANTEE OWNER NAME` == "BEAZER HOMES SALES  INC.")] = "BEAZER HOMES SALES INC" ### fixing spelling error
-homesales <- homesales[(homesales$`SALE YEAR` >= 2000),] #only for 2000+
-head(homesales)
-homesales <- homesales[,c(1,3,4,10,11,15:46)]
 names(homesales)[1] <- "parcel_id" ## rename to parcelid
-### add merge lat and longs  SKIP THIS FOR NOW
+length(unique(homesales$parcel_id)) ## 1.267 million unique parcels in original dataset
+homesales <- homesales[,c(1,3,4,10,11,15:46)]
+homesales <- homesales[homesales$`SALE YEAR`>1975,]
+length(unique(homesales$parcel_id)) ## change of sale year only removes about 250 parcels (not sold or disappears post 1975)
+### add merge lat and longs
 fulllatlong <- readRDS("Parcel_IDs_w_Lat_Long.rds")
-homesales <- homesales[fulllatlong, on = c("parcel_id"="parcel_id"),]  ## adding shares of investors
+setkey(fulllatlong, parcel_id)
+setkey(homesales, parcel_id)
+homesales <- merge(homesales, fulllatlong)
 #####
 homesales <- homesales[,c(1,2,3,7, 14, 23, 31,36, 37, 38, 39)]
 homesales <- as.data.table(homesales)
@@ -25,11 +29,10 @@ parcel_status <- data.table(parcel_id=homesales$parcel_id,
                             SELLER=homesales$`GRANTOR OWNER NAME`,
                             BUYER=homesales$`GRANTEE OWNER NAME`,
                             OWNER=homesales$`GRANTEE OWNER NAME`)
-
 ########## creating timetable of who owned what parcel in what year
-DT <- data.table(parcel_id=rep(unique(parcel_status[,parcel_id],),16)) ### building frame of data.table for 30 years of data using repeated 30 years of unique parcels
+DT <- data.table(parcel_id=rep(unique(parcel_status[,parcel_id],),40)) ### building frame of data.table for 16 years of data using repeated 30 years of unique parcels
 setorderv(DT, "parcel_id") # sorts by parcel id
-DT <- DT[, YEAR:= rep(2000:2015), by = c("parcel_id")]  ### filling 'YEARS' with 16 year sequence
+DT <- DT[, YEAR:= rep(1976:2015), by = c("parcel_id")]  ### filling 'YEARS' with 16 year sequence
 setkey(parcel_status, parcel_id, YEAR)
 setkey(DT,parcel_id, YEAR)
 # perform the join using the merge function
@@ -47,20 +50,21 @@ setkey(DT, parcel_id)
 setkey(min_years,parcel_id) ## ignore warnings
 # perform the join using the merge function
 DT <- merge(DT, min_years, all.x=TRUE)
-DT<-DT[!(DT$YEAR < (DT$First_Sale - 1)),]  ### pruning non-existent years (first sale in 2006; removes 1986-2004; assumed built/owned in 2005)
-
+DT<-DT[!(DT$YEAR < (DT$First_Sale - 1)),]  ### pruning non-existent years (ex: first sale in 2006; removes 1986-2004; assumed built/owned in 2005)
 #saveRDS(DT, file="Phoenix_Owners_Timetable.rds")
+#saveRDS(homesales, file="homesales_w_longlat.rds")
 #saveRDS(parcel_status, file="Phoenix_Parcel_Status.rds")
 ########### ADDING LAT AND LONG to timetable
 timetable <- readRDS("Phoenix_Owners_Timetable.rds")
 timetable$OWNER[(timetable$OWNER == "BEAZER HOMES SALES  INC.")] = "BEAZER HOMES SALES INC" ### fixing spelling error
-timetable <- timetable[(timetable$First_Sale >2005),] #only for 2006+
-### add merge lat and longs  SKIP THIS FOR NOW
+timetable <- timetable[(timetable$YEAR >2004),] #only for 2005+
+length(unique(timetable$parcel_id)) ## 778002 parcels with lat and longs
+### add merge lat and longs 
 setkey(timetable, parcel_id)
 setkey(fulllatlong, parcel_id)
 timetable <- merge(timetable, fulllatlong, all.x=TRUE)
 timetable <- timetable[which(is.na(timetable[,6])==FALSE),]
-timetable <- timetable[,-c(timetable$First_Sale)]
+timetable <- timetable[,-c(4)]
 #saveRDS(timetable, file="Phoenix_Owners_Timetable_w_LatLong.rds")
 
 
